@@ -1,0 +1,34 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:DFTvis.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="DFTvis.Views.MainWindow"
+		xmlns:ScottPlot="clr-namespace:ScottPlot.Avalonia;assembly=ScottPlot.Avalonia"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="DFTvis">
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+
+	<DockPanel>
+		<TextBlock 
+			Text="{Binding Text}" 
+			FontSize="10" 
+			HorizontalAlignment="Center" 
+			VerticalAlignment="Center"
+			DockPanel.Dock="Right"/>
+		<StackPanel 
+			DockPanel.Dock="Left" 
+			VerticalAlignment="Center">
+		    <TextBox 
+				Text="{Binding FileName}" 
+				MaxHeight="10"/>
+			<ScottPlot:AvaPlot Name="DFTPlot"/>
+		</StackPanel>
+	</DockPanel>
+	
+
+</Window>
