@@ -46,7 +46,7 @@ namespace DFTvis
 			//});
 		}
 		
-		public double[] DiscreteFourierTransform(int[] input)
+		public double[] DiscreteFourierTransform1Second(int[] input)
 		{
 			if (input.Length != samples)
 				return new double[0];
@@ -55,7 +55,6 @@ namespace DFTvis
 			const double radiansStaticPart = 2 * PI * sampleSpacing;
 			for (int i = 0; i < frequencies; i++)
 			{
-				//Complex[] row = MatrixRow(i);
 				Complex rawOutput = 0;
 				Complex matrixElement;
 				double radians;
@@ -70,9 +69,36 @@ namespace DFTvis
 			return output;
 		}
 
+		public double[] DiscreteFourierTransform(int[] input, int frequencies)
+		{
+			int sampleCount = input.Length;
+			double[] output = new double[frequencies];
+			double radiansStaticPart = 2 * PI / sampleCount;
+			for (int i = 0; i < frequencies; i++)
+			{
+				Complex rawOutput = 0;
+				Complex matrixElement;
+				double radians;
+				for (int j = 0; j < sampleCount; j++)
+				{
+					radians = radiansStaticPart * i * j;
+					matrixElement = UnitCircleExp(radians);
+					rawOutput += input[j] * matrixElement;
+				}
+				output[i] = rawOutput.Magnitude;
+			}
+			return output;
+		}
+
+		public double[] DiscreteFourierTransform(int[] input)
+		{
+			return DiscreteFourierTransform(input, frequencies);
+		}
+
 		public double[] DiscreteFourierTransformNormalized(int[] input)
 		{
-			return DiscreteFourierTransform(input).Select(x => x / samples).ToArray();
+			int len = input.Length;
+			return DiscreteFourierTransform(input).Select(x => x / len / samples).ToArray();
 		}
 		
 
