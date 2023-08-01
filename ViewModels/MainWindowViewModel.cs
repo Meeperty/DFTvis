@@ -39,8 +39,12 @@ namespace DFTvis.ViewModels
 			DateTime start = DateTime.Now;
 			//var test = dft.DiscreteFourierTransform(dft.MatrixRow(1).Select(x => (int)x.Real).ToArray());
 			//var test = dft.DiscreteFourierTransformNormalized(data);
-			var test = dft.FastFourierTransform(new double[] { 5, 3, 2, 1 });
-			dftData = dft.DiscreteFourierTransformNormalized(wvh.Data[..44100]);
+			var test1a = dft.FastFourierTransform(new double[] { 5, 3, 2, 1 });
+			var test1b = dft.DiscreteFourierTransform(new int[] { 5, 3, 2 ,1 });
+			//var test2a = dft.DiscreteFourierTransform1Second(wvh.Data[..44100]);
+			//var test2b = dft.DiscreteFourierTransform(wvh.Data[..44100]);
+			var diff = test1a.Zip(test1b, (x, y) => x - y);
+			dftData = dft.DiscreteFourierTransform(wvh.Data[..44100], 11025);
 			DateTime end = DateTime.Now;
 			TimeSpan duration = end - start;
 		}

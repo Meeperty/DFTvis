@@ -96,8 +96,8 @@ namespace DFTvis
 			}
 			for (int k = 0; k < size / 2; k++)
 			{
-				Complex p = output[k];
-				Complex q = UnitCircleExp(-2 * PI * k / size) * output[k + size/2];
+				Complex p = EvenFourier[k];
+				Complex q = OddFourier[k] * UnitCircleExp(-2 * PI * k / size);
 				output[k] = p + q;
 				output[k + size/2] = p - q;
 			}
