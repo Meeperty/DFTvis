@@ -12,39 +12,36 @@ using System.Linq;
 using ScottPlot.Avalonia;
 using System.Drawing;
 using ScottPlot.Plottable;
+using Accord.Math;
+using Avalonia.Markup.Xaml.Templates;
+using System.Numerics;
+using System.Diagnostics;
+using Avalonia.Input;
 
 namespace DFTvis.ViewModels
 {
 	public class MainWindowViewModel : /*ReactiveObject,*/ INotifyPropertyChanged
 	{
 		Fourier dft;
-		double[] dftData;
+		double[] fast;
+		double[] discrete;
 		public event PropertyChangedEventHandler? PropertyChanged;
+		int inputCount = 16384;
+
+		private WavFile wvh = new(fileName);
 
 		public MainWindowViewModel()
 		{
 			dft = new();
-			//updateMatrixGeneratedTimer = new(1000);
-			//updateMatrixGeneratedTimer.Elapsed += updateMatrixGenerated;
-			//updateMatrixGeneratedTimer.AutoReset = true;
-			//updateMatrixGeneratedTimer.Start();
-			var data = new int[44100];
-			for (int i = 0; i < 44100; i++)
-			{
-				if (i % 2 == 0)
-					data[i] = 1;
-				else
-					data[i] = -1;
-			}
 			DateTime start = DateTime.Now;
-			//var test = dft.DiscreteFourierTransform(dft.MatrixRow(1).Select(x => (int)x.Real).ToArray());
-			//var test = dft.DiscreteFourierTransformNormalized(data);
-			var test1a = dft.FastFourierTransform(new double[] { 5, 3, 2, 1 });
-			var test1b = dft.DiscreteFourierTransform(new int[] { 5, 3, 2 ,1 });
-			//var test2a = dft.DiscreteFourierTransform1Second(wvh.Data[..44100]);
-			//var test2b = dft.DiscreteFourierTransform(wvh.Data[..44100]);
-			var diff = test1a.Zip(test1b, (x, y) => x - y);
-			dftData = dft.DiscreteFourierTransform(wvh.Data[..44100], 11025);
+			wvh = new(FileName);
+			Debug.WriteLine(wvh);
+			for (int i = 0; i < 100; i++)
+			{
+				Debug.WriteLine(wvh.Data[i]);
+			}
+			var input = wvh.Data[0..inputCount].Select(x => (double)x).ToArray();
+			fast = dft.FastFourierTransformNormalized(input)[1..(inputCount/2)];
 			DateTime end = DateTime.Now;
 			TimeSpan duration = end - start;
 		}
@@ -52,22 +49,22 @@ namespace DFTvis.ViewModels
 		private void LoadPlot()
 		{
 			//DFTPlot.Plot.Add();
-			DFTPlot.Width = Width * 0.6d;
-			DFTPlot.Height = Height * 0.5d;
+			DFTPlot.Width = Width * 0.7d;
+			DFTPlot.Height = Height * 0.6d;
 
-			SignalPlot sp = DFTPlot.Plot.AddSignal(dftData, color:Color.IndianRed);
+			SignalPlot sp = DFTPlot.Plot.AddSignal(fast, sampleRate:inputCount/(double)44100, color:Color.IndianRed);
+			//DFTPlot.Plot.AddSignal(discrete, color:Color.Chocolate);
 			double freq = 440;
-			//DFTPlot.Plot.AddVerticalLine(freq/2, Color.FromArgb(0x7f_AF_5F_7F));
-			//DFTPlot.Plot.AddVerticalLine(freq, Color.FromArgb(0x7f_AF_5F_7F));
-			//DFTPlot.Plot.AddVerticalLine(freq*2, Color.FromArgb(0x7f_AF_5F_7F));
-			DFTPlot.Plot.SetAxisLimitsX(0, 1000);
-			DFTPlot.Plot.SetAxisLimitsY(0, 30);
-			DFTPlot.Plot.SaveFig(@"C:\Users\Us\source\repos\DFTvis\Plots\shortA4.png");
+			DFTPlot.Plot.AddVerticalLine(freq / 2, Color.FromArgb(0x7f_AF_5F_7F));
+			DFTPlot.Plot.AddVerticalLine(freq, Color.FromArgb(0x7f_AF_5F_7F));
+			DFTPlot.Plot.AddVerticalLine(freq * 2, Color.FromArgb(0x7f_AF_5F_7F));
+			DFTPlot.Plot.SetAxisLimitsX(-5, 500);
+			DFTPlot.Plot.SetAxisLimitsY(0, 10);
+			//DFTPlot.Plot.SaveFig(@"C:\Users\Us\source\repos\DFTvis\Plots\shortA4.png");
 		}
 
-		public string Text => wvh.Data.Length.ToString();
+		public string Text => wvh.ToString();
 
-		private WavFile wvh = new(fileName);
 
 		public string FileName
 		{
@@ -79,7 +76,7 @@ namespace DFTvis.ViewModels
 				PropertyChanged?.Invoke(this, new(nameof(FileName)));
 			}
 		}
-		private static string fileName = @"C:\Users\Us\source\repos\DFTvis\Examples\flute_A4short_PCM_us8.wav";
+		private static string fileName = @"C:\Users\Us\source\repos\DFTvis\Examples\flute_A41second_PCM_us8_mono.wav";
 
 		private AvaPlot dftPlot;
 		public AvaPlot DFTPlot
@@ -102,19 +99,5 @@ namespace DFTvis.ViewModels
 		//	set => this.RaiseAndSetIfChanged(ref bpm, float.Parse(value));
 		//}
 		//public float bpm = 120;
-
-		//public string MatrixGenerated
-		//{
-		//	get => dft.matrixGenerated.ToString();
-		//}
-		//private string oldMatrixGenerated;
-		//private System.Timers.Timer updateMatrixGeneratedTimer;
-		//private void updateMatrixGenerated(object? o, ElapsedEventArgs e)
-		//{
-		//	if (oldMatrixGenerated != null && oldMatrixGenerated != MatrixGenerated) {
-		//		PropertyChanged?.Invoke(this, new(nameof(MatrixGenerated)));
-		//	}
-		//	oldMatrixGenerated = MatrixGenerated;
-		//}
 	}
 }

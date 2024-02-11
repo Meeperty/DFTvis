@@ -102,32 +102,41 @@ namespace DFTvis
 		}
 		
 
-		public Complex[] ComplexFastFourierTransform(Complex[] input, int size, int stride = 1)
+		public Complex[] ComplexFastFourierTransform(Complex[] input)
 		{
+			int size = input.Length;
+			int halfSize = size/2;
 			Complex[] output = new Complex[size];
 			if (size == 1)
 			{
 				output[0] = input[0];
-				Debug.WriteLine($"For input {ComplexArrString(input)}, CFFT returning {ComplexArrString(output)}");
-				return output;
+				goto ret;
 			}
 			//TODO: add more base cases
 
-			Complex[] EvenFourier = ComplexFastFourierTransform(input, size/2, 2*stride);
-			Complex[] OddFourier = ComplexFastFourierTransform(input[stride..], size/2, 2*stride);
-			for (int i = 0; i < size; i++)
+			Complex[] evenInputs = new Complex[halfSize];
+			for (int i = 0; i < halfSize; i++)
 			{
-				if (i % 2 == 0) output[i] = EvenFourier[i/2];
-				else output[i] = OddFourier[i/2];
+				evenInputs[i] = input[2 * i];
 			}
-			for (int k = 0; k < size / 2; k++)
+			Complex[] oddInputs = new Complex[halfSize];
+			for (int i = 0; i < halfSize; i++)
+			{
+				oddInputs[i] = input[2 * (i + 1) - 1];
+			}
+			Complex[] EvenFourier = ComplexFastFourierTransform(evenInputs);
+			Complex[] OddFourier = ComplexFastFourierTransform(oddInputs);
+			for (int k = 0; k < halfSize; k++)
 			{
 				Complex p = EvenFourier[k];
 				Complex q = OddFourier[k] * UnitCircleExp(-2 * PI * k / size);
 				output[k] = p + q;
-				output[k + size/2] = p - q;
+				output[k + halfSize] = p - q;
 			}
-			Debug.WriteLine($"For input {ComplexArrString(input)}, CFFT returning {ComplexArrString(output)}");
+
+			ret:
+			Debug.Write($"{output.Length}#");
+			//Debug.WriteLine($"For input {ComplexArrString(input)}, CFFT returning {ComplexArrString(output)}");
 			return output;
 		}
 
@@ -138,12 +147,14 @@ namespace DFTvis
 
 		public double[] FastFourierTransform(double[] input)
 		{
-			return ComplexFastFourierTransform(input.Select(x => new Complex(x, 0)).AsArray(), input.Length).Select(x => x.Magnitude).ToArray();
+			return ComplexFastFourierTransform(input.Select(x => new Complex(x, 0)).AsArray()).Select(x => x.Magnitude).ToArray();
 		}
 
 		private Complex UnitCircleExp(double radians)
 		{
-			return new Complex(Math.Cos(radians), Math.Sin(radians));
+			var o = new Complex(Math.Cos(radians), Math.Sin(radians));
+			//Debug.WriteLine($"UnitCircleExp {radians/Math.PI}pi: {o}");
+			return o;
 		}
 
 		private string ComplexArrString(Complex[] input)
