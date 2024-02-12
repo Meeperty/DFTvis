@@ -36,14 +36,13 @@ namespace DFTvis.ViewModels
 			DateTime start = DateTime.Now;
 			wvh = new(FileName);
 			Debug.WriteLine(wvh);
-			for (int i = 0; i < 100; i++)
-			{
-				Debug.WriteLine(wvh.Data[i]);
-			}
-			var input = wvh.Data[0..inputCount].Select(x => (double)x).ToArray();
+			var input = wvh.GetData<double>()[0..inputCount];
 			fast = dft.FastFourierTransformNormalized(input)[1..(inputCount/2)];
 			DateTime end = DateTime.Now;
 			TimeSpan duration = end - start;
+			Text = duration.ToString();
+
+			Debug.WriteLine(duration);
 		}
 
 		private void LoadPlot()
@@ -53,7 +52,7 @@ namespace DFTvis.ViewModels
 			DFTPlot.Height = Height * 0.6d;
 
 			SignalPlot sp = DFTPlot.Plot.AddSignal(fast, sampleRate:inputCount/(double)44100, color:Color.IndianRed);
-			//DFTPlot.Plot.AddSignal(discrete, color:Color.Chocolate);
+			//DFTPlot.Plot.AddSignal(discrete, sampleRate:inputCount/(double)44100, color:Color.Black);
 			double freq = 440;
 			DFTPlot.Plot.AddVerticalLine(freq / 2, Color.FromArgb(0x7f_AF_5F_7F));
 			DFTPlot.Plot.AddVerticalLine(freq, Color.FromArgb(0x7f_AF_5F_7F));
@@ -63,8 +62,16 @@ namespace DFTvis.ViewModels
 			//DFTPlot.Plot.SaveFig(@"C:\Users\Us\source\repos\DFTvis\Plots\shortA4.png");
 		}
 
-		public string Text => wvh.ToString();
-
+		private string text = @"hs:hs:hs.ssssss";
+		public string Text
+		{
+			get => text;
+			set
+			{
+				text = value;
+				PropertyChanged?.Invoke(this, new(nameof(Text)));
+			}
+		}
 
 		public string FileName
 		{

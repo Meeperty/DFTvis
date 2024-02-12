@@ -34,17 +34,24 @@ namespace DFTvis.WindowsSound
 		Int16[] int16Data = new Int16[0];
 		BitsPerSample bps = BitsPerSample.SixteenBits;
 
-		public int[] Data
+		public T[] GetData<T>(int channel = 1)
 		{
-			get
+			switch (bps)
 			{
-				switch (bps)
-				{
-					case BitsPerSample.EigthBits:
-						return Array.ConvertAll(byteData, x => (int)x);
-					default:
-						return Array.ConvertAll(int16Data, x => (int)x);
-				}
+				case BitsPerSample.EigthBits:
+					T[] data = new T[byteData.Length];
+					for (int i = 0; i < byteData.Length; i++)
+					{
+						if (i % numChannels == 0) data[i / numChannels] = (T)Convert.ChangeType(byteData[i], typeof(T));
+					}
+					return data;
+				default: //BitsPerSample.SixteenBits
+					T[] data2 = new T[int16Data.Length];
+					for (int i = 0; i < byteData.Length; i++)
+					{
+						if (i % numChannels == 0) data2[i / numChannels] = (T)Convert.ChangeType(byteData[i], typeof(T));
+					}
+					return data2;
 			}
 		}
 
