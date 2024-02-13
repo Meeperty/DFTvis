@@ -13,42 +13,11 @@ namespace DFTvis.ViewModels
 		Fourier dft;
 		double[] fast;
 		double[] discrete;
+		double[,] spectrogram;
 		public event PropertyChangedEventHandler? PropertyChanged;
 		int inputCount = 16384 * 2;
 
 		private WavFile wvh = new(fileName);
-
-		public MainWindowViewModel()
-		{
-			dft = new();
-			DateTime start = DateTime.Now;
-			wvh = new(FileName);
-			Debug.WriteLine(wvh);
-			var input = wvh.GetData<double>(1)[0..inputCount];
-			fast = dft.FastFourierTransformNormalized(input)[1..(inputCount/2)];
-			DateTime end = DateTime.Now;
-			TimeSpan duration = end - start;
-			Text = duration.ToString();
-
-			Debug.WriteLine(duration);
-		}
-
-		private void LoadPlot()
-		{
-			//DFTPlot.Plot.Add();
-			DFTPlot.Width = Width * 0.7d;
-			DFTPlot.Height = Height * 0.6d;
-
-			SignalPlot sp = DFTPlot.Plot.AddSignal(fast, sampleRate:inputCount/(double)44100, color:Color.IndianRed);
-			//DFTPlot.Plot.AddSignal(discrete, sampleRate:inputCount/(double)44100, color:Color.Black);
-			double freq = 440;
-			DFTPlot.Plot.AddVerticalLine(freq / 2, Color.FromArgb(0x7f_AF_5F_7F));
-			DFTPlot.Plot.AddVerticalLine(freq, Color.FromArgb(0x7f_AF_5F_7F));
-			DFTPlot.Plot.AddVerticalLine(freq * 2, Color.FromArgb(0x7f_AF_5F_7F));
-			DFTPlot.Plot.SetAxisLimitsX(-5, 500);
-			DFTPlot.Plot.SetAxisLimitsY(0, 10);
-			//DFTPlot.Plot.SaveFig(@"C:\Users\Us\source\repos\DFTvis\Plots\shortA4.png");
-		}
 
 		private string text = @"hs:hs:hs.ssssss";
 		public string Text
@@ -88,11 +57,42 @@ namespace DFTvis.ViewModels
 		public double Width;
 		public double Height;
 
-		//public string BPM
-		//{
-		//	get => bpm.ToString();
-		//	set => this.RaiseAndSetIfChanged(ref bpm, float.Parse(value));
-		//}
-		//public float bpm = 120;
+		public MainWindowViewModel()
+		{
+			dft = new();
+			DateTime start = DateTime.Now;
+			wvh = new(FileName);
+			Debug.WriteLine(wvh);
+			var input = wvh.GetData<double>(1)[0..inputCount];
+			fast = dft.FastFourierTransformNormalized(input)[1..(inputCount/2)];
+			DateTime end = DateTime.Now;
+			TimeSpan duration = end - start;
+			Text = duration.ToString();
+
+			Debug.WriteLine(duration);
+		}
+
+		private void GenerateSpectrogram()
+		{
+
+		}
+
+		private void LoadPlot()
+		{
+			DFTPlot.Width = Width * 0.7d;
+			DFTPlot.Height = Height * 0.6d;
+			
+			Heatmap hm = DFTPlot.Plot.AddHeatmap(spectrogram);
+			SignalPlot sp = DFTPlot.Plot.AddSignal(fast, sampleRate:inputCount/(double)44100, color:Color.IndianRed);
+			//DFTPlot.Plot.AddSignal(discrete, sampleRate:inputCount/(double)44100, color:Color.Black);
+			double freq = 440;
+			DFTPlot.Plot.AddVerticalLine(freq / 2, Color.FromArgb(0x7f_AF_5F_7F));
+			DFTPlot.Plot.AddVerticalLine(freq, Color.FromArgb(0x7f_AF_5F_7F));
+			DFTPlot.Plot.AddVerticalLine(freq * 2, Color.FromArgb(0x7f_AF_5F_7F));
+			DFTPlot.Plot.SetAxisLimitsX(-5, 500);
+			DFTPlot.Plot.SetAxisLimitsY(0, 10);
+			//DFTPlot.Plot.SaveFig(@"C:\Users\Us\source\repos\DFTvis\Plots\shortA4.png");
+		}
+
 	}
 }
