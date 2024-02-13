@@ -1,22 +1,10 @@
 using DFTvis.WindowsSound;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using ReactiveUI;
-using System.ComponentModel;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System.Threading;
-using System.Timers;
-using DynamicData.Kernel;
-using System.Linq;
 using ScottPlot.Avalonia;
-using System.Drawing;
 using ScottPlot.Plottable;
-using Accord.Math;
-using Avalonia.Markup.Xaml.Templates;
-using System.Numerics;
+using System;
+using System.ComponentModel;
 using System.Diagnostics;
-using Avalonia.Input;
+using System.Drawing;
 
 namespace DFTvis.ViewModels
 {
@@ -26,7 +14,7 @@ namespace DFTvis.ViewModels
 		double[] fast;
 		double[] discrete;
 		public event PropertyChangedEventHandler? PropertyChanged;
-		int inputCount = 16384;
+		int inputCount = 16384 * 2;
 
 		private WavFile wvh = new(fileName);
 
@@ -36,7 +24,7 @@ namespace DFTvis.ViewModels
 			DateTime start = DateTime.Now;
 			wvh = new(FileName);
 			Debug.WriteLine(wvh);
-			var input = wvh.GetData<double>()[0..inputCount];
+			var input = wvh.GetData<double>(1)[0..inputCount];
 			fast = dft.FastFourierTransformNormalized(input)[1..(inputCount/2)];
 			DateTime end = DateTime.Now;
 			TimeSpan duration = end - start;

@@ -17,16 +17,16 @@
 		<TextBlock 
 			Text="{Binding Text}" 
 			FontSize="10" 
-			HorizontalAlignment="Center" 
+			HorizontalAlignment="Right" 
 			VerticalAlignment="Center"
 			DockPanel.Dock="Right"/>
 		<StackPanel 
-			DockPanel.Dock="Left" 
+			DockPanel.Dock="Left"
 			VerticalAlignment="Center">
 		    <TextBox 
 				Text="{Binding FileName}" 
 				MaxHeight="10"/>
-			<ScottPlot:AvaPlot Name="DFTPlot"/>
+			<ScottPlot:AvaPlot Name="DFTPlot" HorizontalAlignment="Left"/>
 		</StackPanel>
 	</DockPanel>
 	

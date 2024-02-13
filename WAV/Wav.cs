@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace DFTvis.WindowsSound
 {
@@ -42,14 +39,20 @@ namespace DFTvis.WindowsSound
 					T[] data = new T[byteData.Length];
 					for (int i = 0; i < byteData.Length; i++)
 					{
-						if (i % numChannels == 0) data[i / numChannels] = (T)Convert.ChangeType(byteData[i], typeof(T));
+						if (i % numChannels == 0) 
+						{ 
+							data[i / numChannels] = (T)Convert.ChangeType(byteData[i], typeof(T)); 
+						}
 					}
 					return data;
 				default: //BitsPerSample.SixteenBits
 					T[] data2 = new T[int16Data.Length];
 					for (int i = 0; i < byteData.Length; i++)
 					{
-						if (i % numChannels == 0) data2[i / numChannels] = (T)Convert.ChangeType(byteData[i], typeof(T));
+						if (i % numChannels == 0) 
+						{ 
+							data2[i / numChannels] = (T)Convert.ChangeType(byteData[i], typeof(T)); 
+						}
 					}
 					return data2;
 			}

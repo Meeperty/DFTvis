@@ -1,18 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
+﻿using DynamicData.Kernel;
+using System;
 using System.Linq;
 using System.Numerics;
-using System.Runtime.InteropServices;
-using System.Runtime.Serialization;
 using System.Text;
-using System.Threading.Tasks;
-using System.Transactions;
-using Accord.Math;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.IO;
-using DynamicData.Kernel;
-using System.Diagnostics;
 
 namespace DFTvis
 {
@@ -22,52 +12,6 @@ namespace DFTvis
 		const int samples = frequencies;
 		const double sampleSpacing = 1/(double)samples;
 		const double PI = Math.PI;
-
-		//Complex[,] dftMatrix = new Complex[0, 0];
-		//public bool matrixGenerated = false;
-
-		public Fourier()
-		{
-			//dftMatrix = new Complex[frequencies, samples];
-			////Future TODO: make this faster (probably async)
-			//Task fillMatrix = Task.Factory.StartNew(() =>
-			//{
-			//	for (int i = 0; i < frequencies; i++)
-			//	{
-			//		for (int j = 0; j < samples; j++)
-			//		{
-			//			dftMatrix[i, j] = new(
-			//				Math.Cos(2 * PI * i * j * sampleSpacing),
-			//				Math.Sin(2 * PI * i * j * sampleSpacing)
-			//				);
-			//		}
-			//	}
-			//	matrixGenerated = true;
-			//});
-		}
-		
-		public double[] DiscreteFourierTransform1Second(int[] input)
-		{
-			if (input.Length != samples)
-				return new double[0];
-
-			double[] output = new double[samples];
-			const double radiansStaticPart = 2 * PI * sampleSpacing;
-			for (int i = 0; i < frequencies; i++)
-			{
-				Complex rawOutput = 0;
-				Complex matrixElement;
-				double radians;
-				for (int j = 0; j < samples; j++)
-				{
-					radians = radiansStaticPart * i * j;
-					matrixElement = new Complex(Math.Cos(radians), Math.Sin(radians));
-					rawOutput += input[j] * matrixElement;
-				}
-				output[i] = rawOutput.Magnitude;
-			}
-			return output;
-		}
 
 		public double[] DiscreteFourierTransform(int[] input, int frequencies)
 		{
@@ -100,7 +44,6 @@ namespace DFTvis
 			int len = input.Length;
 			return DiscreteFourierTransform(input).Select(x => x / len / samples).ToArray();
 		}
-		
 
 		public Complex[] ComplexFastFourierTransform(Complex[] input)
 		{
@@ -135,12 +78,12 @@ namespace DFTvis
 			}
 
 			ret:
-			Debug.Write($"{output.Length}#");
+			//Debug.Write($"{output.Length}#");
 			//Debug.WriteLine($"For input {ComplexArrString(input)}, CFFT returning {ComplexArrString(output)}");
 			return output;
 		}
 
-		public double[] FastFourierTransformNormalized(double[] input)
+		public double[] FastFourierTransformNormalized<T>(T[] input)
 		{
 			return FastFourierTransform(input).Select(x => x / input.Length).ToArray();
 		}
@@ -150,9 +93,26 @@ namespace DFTvis
 			return ComplexFastFourierTransform(input.Select(x => new Complex(x, 0)).AsArray()).Select(x => x.Magnitude).ToArray();
 		}
 
+		public double[] FastFourierTransform<T>(T[] rawInput)
+		{
+			if (Convert.ChangeType(rawInput[0], typeof(double)) == null)
+			{
+				throw new InvalidCastException("FastFourierTransform<T> was given a T which cannot be converted to double");
+			}
+			double[] input = rawInput.Select(x => (double)Convert.ChangeType(x, typeof(double))).ToArray();
+			return ComplexFastFourierTransform(input.Select(x => new Complex(x, 0)).ToArray())
+					.Select(x => x.Magnitude)
+					.ToArray();
+		}
+
+		//private Dictionary<double, Complex> unitCircleExpLUT = new();
+
 		private Complex UnitCircleExp(double radians)
 		{
+			//if (unitCircleExpLUT.ContainsKey(radians)) { return unitCircleExpLUT[radians]; }
+
 			var o = new Complex(Math.Cos(radians), Math.Sin(radians));
+			//unitCircleExpLUT[radians] = o;
 			//Debug.WriteLine($"UnitCircleExp {radians/Math.PI}pi: {o}");
 			return o;
 		}
