@@ -1,3 +1,4 @@
+using Avalonia.Media;
 using DFTvis.WindowsSound;
 using ScottPlot;
 using ScottPlot.Avalonia;
@@ -12,7 +13,6 @@ namespace DFTvis.ViewModels
 	public class MainWindowViewModel : /*ReactiveObject,*/ INotifyPropertyChanged
 	{
 		double[] fast;
-		double[,] spectrogram;
 		public event PropertyChangedEventHandler? PropertyChanged;
 		int inputCount = 16384 * 2;
 
@@ -56,8 +56,16 @@ namespace DFTvis.ViewModels
 			}
 		}
 
-		public double Width;
-		public double Height;
+		private double[,] spectrogram;
+		public double[,] SpectrogramData
+		{
+			get => spectrogram;
+			set 
+			{ 
+				spectrogram =  value; 
+				PropertyChanged?.Invoke(this,new(nameof(SpectrogramData))); 
+			}
+		}
 
 		public MainWindowViewModel()
 		{
@@ -73,33 +81,31 @@ namespace DFTvis.ViewModels
 			Debug.WriteLine(duration);
 		}
 
-		private void GenerateSpectrogram()
+		public void GenerateSpectrogram()
 		{
-			int timeSectionSampleLen = 44100 / 7;
+			int timeSectionSampleLen = 44100 / 2;
 			//int timeSectionSampleLen = wvh.SampleCount;
 			int timeSections = (int)(wvh.SampleCount / (double)timeSectionSampleLen);
 			var input = wvh.GetData<double>()[0..(timeSections * timeSectionSampleLen)];
 			double avg = input.Average();
 			input = input.Select(x => x - avg).ToArray();
-			double[,] spectro = new double[44100 / 8, timeSections];
+			double[,] spectro = new double[44100 / 2, timeSections];
 			for (int i = 0; i < timeSections; i++)
 			{
 				double[] inputs = input[(i * timeSectionSampleLen)..((i + 1) * timeSectionSampleLen)];
 				inputs = Fourier.ZeroPad(inputs.ToList(), 44100 /*wvh.SampleCount*/).ToArray();
 				double[] freqs = Fourier.FFTNormalized(inputs);
 				//fast = freqs;
-				for (int j = 0; j < 44100 / 8; j++)
+				for (int j = 0; j < 44100 / 2; j++)
 				{
 					spectro[j, i] = freqs[j];
 				}
 			}
-			spectrogram = spectro;
+			SpectrogramData = spectro;
 		}
 
 		private void LoadPlot()
 		{
-			DFTPlot.Width = Width * 0.7d;
-			DFTPlot.Height = Height * 0.6d;
 			//DFTPlot.Plot.Add.Signal(fast, color:ScottPlot.Color.FromARGB(0xFF000000));
 			Heatmap hm = DFTPlot.Plot.Add.Heatmap(spectrogram);
 			hm.Colormap = new ScottPlot.Colormaps.Plasma();

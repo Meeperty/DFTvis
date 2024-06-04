@@ -1,19 +1,33 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:vm="using:DFTvis.ViewModels"
+        xmlns:vm="clr-namespace:DFTvis.ViewModels"
+		xmlns:cc="clr-namespace:DFTvis.Controls"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="DFTvis.Views.MainWindow"
 		xmlns:ScottPlot="clr-namespace:ScottPlot.Avalonia;assembly=ScottPlot.Avalonia"
         Icon="/Assets/avalonia-logo.ico"
-        Title="DFTvis">
+        Title="DFTvis"
+		>
 
     <Design.DataContext>
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
-	<DockPanel>
+	<ScrollViewer HorizontalScrollBarVisibility="Visible">
+		<StackPanel Orientation="Vertical">
+			<!--<TextBlock>HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH</TextBlock>
+			--><TextBlock>GHGHGHGHGHGH</TextBlock>
+			<cc:Spectrogram 
+				Width="500" 
+				Height="300"
+				Data="{Binding SpectrogramData, Mode=OneWay}"/>
+			<TextBlock HorizontalAlignment="Center">GHGHGHGHGHGH</TextBlock>
+		</StackPanel>
+	</ScrollViewer>
+	
+	<!--<DockPanel>
 		<TextBlock 
 			Text="{Binding Text}" 
 			FontSize="10" 
@@ -28,7 +42,7 @@
 				MaxHeight="10"/>
 			<ScottPlot:AvaPlot Name="DFTPlot" HorizontalAlignment="Left"/>
 		</StackPanel>
-	</DockPanel>
+	</DockPanel>-->
 	
 
 </Window>
