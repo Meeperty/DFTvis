@@ -39,8 +39,8 @@ namespace DFTvis.ViewModels
 				PropertyChanged?.Invoke(this, new(nameof(FileName)));
 			}
 		}
-		private static string fileName = @"C:\Users\Us\source\repos\DFTvis\Examples\flute_A4_PCM_us8.wav";
-		//private static string fileName = @"C:\Users\Us\source\repos\DFTvis\Examples\CDC_Voice_PCM_us8.wav";
+		//private static string fileName = @"C:\Users\Us\source\repos\DFTvis\Examples\flute_A4_PCM_us8.wav";
+		private static string fileName = @"C:\Users\Us\source\repos\DFTvis\Examples\CDC_Voice_PCM_us8.wav";
 		//private static string fileName = @"C:\Users\Us\Documents\Source Unpack 2.4\portal\sound\vo\aperture_ai\03_part1_entry-1.wav";
 		//private static string fileName = @"C:\Users\Us\source\repos\DFTvis\Examples\666 sin 30 sec.wav";
 
@@ -89,16 +89,16 @@ namespace DFTvis.ViewModels
 			var input = wvh.GetData<double>()[0..(timeSections * timeSectionSampleLen)];
 			double avg = input.Average();
 			input = input.Select(x => x - avg).ToArray();
-			double[,] spectro = new double[44100 / 2, timeSections];
+			double[,] spectro = new double[timeSections, 44100 / 10];
 			for (int i = 0; i < timeSections; i++)
 			{
 				double[] inputs = input[(i * timeSectionSampleLen)..((i + 1) * timeSectionSampleLen)];
 				inputs = Fourier.ZeroPad(inputs.ToList(), 44100 /*wvh.SampleCount*/).ToArray();
 				double[] freqs = Fourier.FFTNormalized(inputs);
 				//fast = freqs;
-				for (int j = 0; j < 44100 / 2; j++)
+				for (int j = 0; j < 44100 / 10; j++)
 				{
-					spectro[j, i] = freqs[j];
+					spectro[i, j] = freqs[j];
 				}
 			}
 			SpectrogramData = spectro;

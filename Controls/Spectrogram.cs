@@ -4,6 +4,7 @@ using Avalonia.Media;
 using Avalonia.VisualTree;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,7 +14,7 @@ namespace DFTvis.Controls
 	public class Spectrogram : Control
 	{
 		public static readonly StyledProperty<Color> MaxColorProperty =
-			AvaloniaProperty.Register<Spectrogram, Color>(name: "MaxColor", defaultValue: new Color(255, 255, 0, 255));
+			AvaloniaProperty.Register<Spectrogram, Color>(name: "MaxColor", defaultValue: new Color(255, 255, 155, 0));
 		public Color MaxColor
 		{
 			get { return GetValue(MaxColorProperty); }
@@ -21,7 +22,7 @@ namespace DFTvis.Controls
 		}
 
 		public static readonly StyledProperty<Color> MinColorProperty =
-			AvaloniaProperty.Register<Spectrogram, Color>(name: "MinColor", defaultValue: new Color(255, 255, 127, 0));
+			AvaloniaProperty.Register<Spectrogram, Color>(name: "MinColor", defaultValue: new Color(255, 127, 127, 127));
 		public Color MinColor
 		{
 			get { return GetValue(MinColorProperty); }
@@ -37,66 +38,53 @@ namespace DFTvis.Controls
 		}
 		public void OnDataChange(AvaloniaPropertyChangedEventArgs<double[,]> e)
 		{
-			GenerateColors();
+			maxReading = MaxReading();
+			GenerateRectangles();
 		}
+		private double maxReading = 0;
 
-		IBrush[,] colorBrushes;
-		Rect[,] rects;
+
+		int colorResolution = 10;
+
+		List<SpectroRect> rects = new();
 
 		public Spectrogram()
 		{
 			DataProperty.Changed.Subscribe(OnDataChange);
 		}
 
-		private void GenerateColors()
-		{
-			int ylen = Data.GetLength(0);
-			int xlen = Data.GetLength(1);
-			colorBrushes = new IBrush[ ylen, xlen ];
-			double max = MaxReading();
-
-			for (int i = 0; i < ylen; i++)
-			{
-				for (int j = 0; j < xlen; j++)
-				{
-					double x = Data[i, j];
-					double t = x / max;
-					t = Math.Sqrt(t); //sqrt weighting
-					SolidColorBrush brush = new SolidColorBrush(ColorLerp(MinColor, MaxColor, t));
-					brush.Opacity = 1;
-					colorBrushes[i, j] = brush;
-				}
-			}
-		}
-		
 		public override void Render(DrawingContext context)
 		{
-			TransformedBounds? tBounds = this.GetTransformedBounds();
-			if (generatedBounds != tBounds.Value.Bounds)
+			TransformedBounds tBounds = this.GetTransformedBounds().Value;
+			if (generatedClip != tBounds.Clip)
 				GenerateRectangles();
 
-			if (colorBrushes is not null) {
-				for (int i = 0; i < colorBrushes.GetLength(0); i++)
-				{
-					for (int j = 0; j < colorBrushes.GetLength(1); j++)
-					{
-						context.DrawRectangle(colorBrushes[i,j], null, rects[i, j]);
-					}
-				}
+			for (int i = 0; i < rects.Count; i++)
+			{
+				SpectroRect sr = rects[i];
+				Rect rectToDraw = sr.rect;
+				IBrush brush = sr.brush;
+				context.DrawRectangle(brush, null, rectToDraw);
 			}
 
 			base.Render(context);
 		}
 
-		Rect generatedBounds = new Rect();
+		Rect generatedClip = new Rect();
 		private void GenerateRectangles()
 		{
+			var tBounds = this.GetTransformedBounds().Value;
+			generatedClip = tBounds.Clip;
 			Rect bounds = this.GetTransformedBounds().Value.Bounds;
-			generatedBounds = bounds;
 
-			int horizontalDataCount = Data.GetLength(1);
-			int verticalDataCount = Data.GetLength(0);
-			rects = new Rect[verticalDataCount, horizontalDataCount];
+			//sometimes this is true, IDK why
+			if (bounds.Width == 0 && bounds.Height == 0)
+			{
+				return;
+			}
+
+			int horizontalDataCount = Data.GetLength(0);
+			int verticalDataCount = Data.GetLength(1);
 
 			double sectionWidth = bounds.Width / horizontalDataCount;
 			double sectionHeight = bounds.Height / verticalDataCount;
@@ -104,17 +92,52 @@ namespace DFTvis.Controls
 			double startingX = bounds.X;
 			double startingY = bounds.Y;
 
-			for (int i = 0; i < verticalDataCount; i++)
+			rects = new();
+			for (int i = 0; i < horizontalDataCount; i++)
 			{
-				for (int j = 0; j < horizontalDataCount; j++)
+				for (int j = 0; j < verticalDataCount; j++)
 				{
-					double x = startingX + j * sectionWidth;
-					double y = startingY + i * sectionHeight;
-					Rect rect = new Rect(x, y, sectionWidth, sectionHeight);
-					rects[i, j] = rect;
+					double x = startingX + i * sectionWidth;
+					double y = startingY + bounds.Height - j * sectionHeight;
+					Color color = ColorOfDataPoint(Data[i,j]);
+
+					int repeatLen = 1; //includes starting rect
+					for (; j < verticalDataCount; j++)
+					{
+						if (ColorOfDataPoint(Data[i,j]) == color)
+							repeatLen++;
+						else
+							break;
+					}
+
+					Rect rect = new Rect(x, y - sectionHeight * repeatLen, sectionWidth, sectionHeight * repeatLen);
+					rects.Add(new SpectroRect(rect, color));
 				}
 			}
 		}
+
+		//private void ResizeRectangles()
+		//{
+		//	Rect newBounds = this.GetTransformedBounds().Value.Clip;
+
+		//	int horizontalDataCount = Data.GetLength(1);
+		//	int verticalDataCount = Data.GetLength(0);
+
+		//	double oldSectionWidth = generatedClip.Width;
+		//	double oldSectionHeight = generatedClip.Height;
+
+		//	double newSectionHeight = newBounds.Width;
+		//	double newSectionWidth = newBounds.Height;
+
+		//	for (int i = 0; i < verticalDataCount; i++)
+		//	{
+		//		for (int j = 0; j < horizontalDataCount; j++)
+		//		{
+		//			Rect oldRect = rects[i,j];
+		//			double newX = oldRect.X - (j * oldSectionWidth);
+		//		}
+		//	}
+		//}
 
 		private double MaxReading()
 		{
@@ -136,6 +159,27 @@ namespace DFTvis.Controls
 			byte green = (byte)(a.G * (1 - t) + b.G * t);
 			byte blue = (byte)(a.B * (1 - t) + b.B * t);
 			return new Color(alpha, red, green, blue);
+		}
+
+		private Color ColorOfDataPoint(double dataPoint)
+		{
+			double colorFraction = /*Math.Pow(*/dataPoint / maxReading/*, 2)*/; //sqr weighting to stop high values from taking all the colors
+			colorFraction = Math.Floor(colorFraction * colorResolution) / colorResolution;
+			return ColorLerp(MinColor, MaxColor, colorFraction);
+		}
+	}
+
+	internal struct SpectroRect
+	{
+		public Avalonia.Rect rect;
+		public Color color;
+		public IBrush brush;
+
+		internal SpectroRect(Rect rect, Color color)
+		{
+			this.rect = rect;
+			this.color = color;
+			brush = new SolidColorBrush(color);
 		}
 	}
 }

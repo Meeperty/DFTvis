@@ -6,6 +6,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="DFTvis.Views.MainWindow"
+		x:DataType="vm:MainWindowViewModel"
+		x:CompileBindings="True"
 		xmlns:ScottPlot="clr-namespace:ScottPlot.Avalonia;assembly=ScottPlot.Avalonia"
         Icon="/Assets/avalonia-logo.ico"
         Title="DFTvis"
@@ -19,9 +21,10 @@
 		<StackPanel Orientation="Vertical">
 			<!--<TextBlock>HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH</TextBlock>
 			--><TextBlock>GHGHGHGHGHGH</TextBlock>
+			
 			<cc:Spectrogram 
-				Width="500" 
-				Height="300"
+				Width="900" 
+				Height="600"
 				Data="{Binding SpectrogramData, Mode=OneWay}"/>
 			<TextBlock HorizontalAlignment="Center">GHGHGHGHGHGH</TextBlock>
 		</StackPanel>
