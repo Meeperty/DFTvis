@@ -89,14 +89,14 @@ namespace DFTvis.ViewModels
 			var input = wvh.GetData<double>()[0..(timeSections * timeSectionSampleLen)];
 			double avg = input.Average();
 			input = input.Select(x => x - avg).ToArray();
-			double[,] spectro = new double[timeSections, 44100 / 10];
+			double[,] spectro = new double[timeSections, 44100 / 2];
 			for (int i = 0; i < timeSections; i++)
 			{
 				double[] inputs = input[(i * timeSectionSampleLen)..((i + 1) * timeSectionSampleLen)];
 				inputs = Fourier.ZeroPad(inputs.ToList(), 44100 /*wvh.SampleCount*/).ToArray();
 				double[] freqs = Fourier.FFTNormalized(inputs);
 				//fast = freqs;
-				for (int j = 0; j < 44100 / 10; j++)
+				for (int j = 0; j < 44100 / 2; j++)
 				{
 					spectro[i, j] = freqs[j];
 				}

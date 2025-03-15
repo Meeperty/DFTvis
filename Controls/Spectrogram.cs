@@ -2,6 +2,7 @@
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.VisualTree;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,23 +15,34 @@ namespace DFTvis.Controls
 	public class Spectrogram : Control
 	{
 		public static readonly StyledProperty<Color> MaxColorProperty =
-			AvaloniaProperty.Register<Spectrogram, Color>(name: "MaxColor", defaultValue: new Color(255, 255, 155, 0));
+			AvaloniaProperty.Register<Spectrogram, Color>(nameof(MaxColor), defaultValue: new Color(255, 255, 155, 0));
 		public Color MaxColor
 		{
 			get { return GetValue(MaxColorProperty); }
 			set { SetValue(MaxColorProperty, value); }
 		}
 
+
 		public static readonly StyledProperty<Color> MinColorProperty =
-			AvaloniaProperty.Register<Spectrogram, Color>(name: "MinColor", defaultValue: new Color(255, 127, 127, 127));
+			AvaloniaProperty.Register<Spectrogram, Color>(nameof(MinColor), defaultValue: new Color(255, 127, 127, 127));
 		public Color MinColor
 		{
 			get { return GetValue(MinColorProperty); }
 			set { SetValue(MinColorProperty, value); }
 		}
 
+
+		public static readonly StyledProperty<int> ColorResolutionProperty =
+			AvaloniaProperty.Register<Spectrogram, int>(nameof(ColorResolution), defaultValue: 20);
+		public int ColorResolution
+		{
+			get { return GetValue(ColorResolutionProperty); }
+			set { SetValue(ColorResolutionProperty, value); }
+		}
+
+
 		public static readonly StyledProperty<double[,]> DataProperty = 
-			AvaloniaProperty.Register<Spectrogram, double[,]>(name: "Data");
+			AvaloniaProperty.Register<Spectrogram, double[,]>(nameof(Data));
 		public double[,] Data
 		{
 			get { return GetValue(DataProperty); }
@@ -44,9 +56,10 @@ namespace DFTvis.Controls
 		private double maxReading = 0;
 
 
-		int colorResolution = 10;
-
 		List<SpectroRect> rects = new();
+		Rect generatedClip = new Rect();
+
+		const int columnsPerSecond = 2;
 
 		public Spectrogram()
 		{
@@ -58,7 +71,6 @@ namespace DFTvis.Controls
 			TransformedBounds tBounds = this.GetTransformedBounds().Value;
 			if (generatedClip != tBounds.Clip)
 				GenerateRectangles();
-
 			for (int i = 0; i < rects.Count; i++)
 			{
 				SpectroRect sr = rects[i];
@@ -116,6 +128,8 @@ namespace DFTvis.Controls
 			}
 		}
 
+
+
 		//private void ResizeRectangles()
 		//{
 		//	Rect newBounds = this.GetTransformedBounds().Value.Clip;
@@ -152,6 +166,7 @@ namespace DFTvis.Controls
 			return max;
 		}
 
+
 		private Color ColorLerp(Color a, Color b, double t)
 		{
 			byte alpha = (byte)(a.A * (1 - t) + b.A * t);
@@ -161,10 +176,11 @@ namespace DFTvis.Controls
 			return new Color(alpha, red, green, blue);
 		}
 
+
 		private Color ColorOfDataPoint(double dataPoint)
 		{
 			double colorFraction = /*Math.Pow(*/dataPoint / maxReading/*, 2)*/; //sqr weighting to stop high values from taking all the colors
-			colorFraction = Math.Floor(colorFraction * colorResolution) / colorResolution;
+			colorFraction = Math.Floor(colorFraction * ColorResolution) / ColorResolution;
 			return ColorLerp(MinColor, MaxColor, colorFraction);
 		}
 	}
@@ -172,8 +188,8 @@ namespace DFTvis.Controls
 	internal struct SpectroRect
 	{
 		public Avalonia.Rect rect;
-		public Color color;
-		public IBrush brush;
+		public Avalonia.Media.Color color;
+		public Avalonia.Media.IBrush brush;
 
 		internal SpectroRect(Rect rect, Color color)
 		{

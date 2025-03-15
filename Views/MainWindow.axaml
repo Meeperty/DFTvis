@@ -18,16 +18,20 @@
     </Design.DataContext>
 
 	<ScrollViewer HorizontalScrollBarVisibility="Visible">
-		<StackPanel Orientation="Vertical">
-			<!--<TextBlock>HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH</TextBlock>
-			--><TextBlock>GHGHGHGHGHGH</TextBlock>
-			
+		<!--<Grid ColumnDefinitions="Auto" RowDefinitions="1*, 5*, 1*">
+			<TextBlock Grid.Row="0">GHGHGHGHGHGH</TextBlock>
 			<cc:Spectrogram 
-				Width="900" 
-				Height="600"
+				Grid.Row="1"
 				Data="{Binding SpectrogramData, Mode=OneWay}"/>
-			<TextBlock HorizontalAlignment="Center">GHGHGHGHGHGH</TextBlock>
-		</StackPanel>
+			<TextBlock 
+				Grid.Row="2"
+				HorizontalAlignment="Center"
+				>GHGHGHGHGHGH</TextBlock>
+		</Grid>-->
+		<cc:Spectrogram
+			VerticalAlignment="Stretch"
+			HorizontalAlignment="Stretch"
+			Data="{Binding SpectrogramData, Mode=OneWay}"/>
 	</ScrollViewer>
 	
 	<!--<DockPanel>
