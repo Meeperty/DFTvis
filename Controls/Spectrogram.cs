@@ -52,6 +52,7 @@ namespace DFTvis.Controls
 		{
 			maxReading = MaxReading();
 			GenerateRectangles();
+			InvalidateArrange();
 		}
 		private double maxReading = 0;
 
@@ -65,6 +66,7 @@ namespace DFTvis.Controls
 		{
 			DataProperty.Changed.Subscribe(OnDataChange);
 		}
+
 
 		public override void Render(DrawingContext context)
 		{
@@ -82,12 +84,27 @@ namespace DFTvis.Controls
 			base.Render(context);
 		}
 
-		Rect generatedClip = new Rect();
+		protected override Size ArrangeOverride(Size finalSize)
+		{
+			double widthPerColumn = 50 / columnsPerSecond; //hardcoded for now
+			double width = widthPerColumn * Data.GetLength(0);
+			double height = 300;
+			Size size = new Size(width, height);
+
+			InvalidateVisual();
+			return size;
+		}
+
+		//protected override Size MeasureOverride(Size availableSize)
+		//{
+		//	return availableSize;
+		//}
+
 		private void GenerateRectangles()
 		{
 			var tBounds = this.GetTransformedBounds().Value;
 			generatedClip = tBounds.Clip;
-			Rect bounds = this.GetTransformedBounds().Value.Bounds;
+			Rect bounds = this.GetTransformedBounds().Value.Clip;
 
 			//sometimes this is true, IDK why
 			if (bounds.Width == 0 && bounds.Height == 0)
