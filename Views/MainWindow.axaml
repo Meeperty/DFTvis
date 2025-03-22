@@ -13,21 +13,30 @@
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
-	<DockPanel>
-		<TextBlock 
-			Text="{Binding Text}" 
-			FontSize="10" 
-			HorizontalAlignment="Right" 
-			VerticalAlignment="Center"
-			DockPanel.Dock="Right"/>
-		<StackPanel 
-			DockPanel.Dock="Left"
-			VerticalAlignment="Center">
-		    <TextBox 
-				Text="{Binding FileName}" 
-				MaxHeight="10"/>
-			<ScottPlot:AvaPlot Name="DFTPlot" HorizontalAlignment="Left"/>
-		</StackPanel>
+	<DockPanel
+		DockPanel.Dock="Top"
+		VerticalAlignment="Center">
+		<TextBox 
+			DockPanel.Dock="Top"
+			Text="{Binding FileName}" 
+			MaxHeight="10"
+			Margin="10"/>
+		<Button
+			DockPanel.Dock="Top"
+			HorizontalAlignment="Center"
+			Margin="10"
+			Command="{Binding GenerateAndPlot}">
+			Generate Plot
+		</Button>
+		<TextBlock
+			DockPanel.Dock="Top"
+		Text="{Binding Text}"
+		FontSize="10"
+		HorizontalAlignment="Center"
+		Margin="5"/>
+		<ScottPlot:AvaPlot 
+			DockPanel.Dock="Top"
+			Name="DFTPlot"/>
 	</DockPanel>
 	
 

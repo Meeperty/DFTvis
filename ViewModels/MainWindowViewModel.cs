@@ -1,6 +1,7 @@
 using DFTvis.WindowsSound;
 using ScottPlot;
 using ScottPlot.Avalonia;
+using ScottPlot.Panels;
 using ScottPlot.Plottables;
 using System;
 using System.ComponentModel;
@@ -29,6 +30,10 @@ namespace DFTvis.ViewModels
 			}
 		}
 
+		private static string fileName = @"C:\Users\Us\source\repos\DFTvis\Examples\flute_A4_PCM_us8.wav";
+		//private static string fileName = @"C:\Users\Us\source\repos\DFTvis\Examples\CDC_Voice_PCM_us8.wav";
+		//private static string fileName = @"C:\Users\Us\Documents\Source Unpack 2.4\portal\sound\vo\aperture_ai\03_part1_entry-1.wav";
+		//private static string fileName = @"C:\Users\Us\source\repos\DFTvis\Examples\666 sin 30 sec.wav";
 		public string FileName
 		{
 			get => fileName;
@@ -39,10 +44,6 @@ namespace DFTvis.ViewModels
 				PropertyChanged?.Invoke(this, new(nameof(FileName)));
 			}
 		}
-		private static string fileName = @"C:\Users\Us\source\repos\DFTvis\Examples\flute_A4_PCM_us8.wav";
-		//private static string fileName = @"C:\Users\Us\source\repos\DFTvis\Examples\CDC_Voice_PCM_us8.wav";
-		//private static string fileName = @"C:\Users\Us\Documents\Source Unpack 2.4\portal\sound\vo\aperture_ai\03_part1_entry-1.wav";
-		//private static string fileName = @"C:\Users\Us\source\repos\DFTvis\Examples\666 sin 30 sec.wav";
 
 		private AvaPlot dftPlot;
 		public AvaPlot DFTPlot
@@ -73,6 +74,19 @@ namespace DFTvis.ViewModels
 			Debug.WriteLine(duration);
 		}
 
+		public void GenerateAndPlot()
+		{
+			wvh = new(FileName);
+
+			DateTime startSpectrogram = DateTime.Now;
+			GenerateSpectrogram();
+			DateTime endSpectrogram = DateTime.Now;
+			TimeSpan duration = endSpectrogram - startSpectrogram;
+			Text = $"processing time: {duration}\n{wvh.SampleCount} samples, {wvh.Duration} sec\napprox {new TimeSpan(wvh.SampleRate * duration.Ticks / wvh.SampleCount)} per sec";
+
+			LoadPlot();
+		}
+
 		private void GenerateSpectrogram()
 		{
 			int timeSectionSampleLen = 44100 / 7;
@@ -86,7 +100,7 @@ namespace DFTvis.ViewModels
 			{
 				double[] inputs = input[(i * timeSectionSampleLen)..((i + 1) * timeSectionSampleLen)];
 				inputs = Fourier.ZeroPad(inputs.ToList(), 44100 /*wvh.SampleCount*/).ToArray();
-				double[] freqs = Fourier.FFTNormalized(inputs);
+				double[] freqs = Fourier.FFT(inputs);
 				//fast = freqs;
 				for (int j = 0; j < 44100 / 8; j++)
 				{
@@ -96,23 +110,28 @@ namespace DFTvis.ViewModels
 			spectrogram = spectro;
 		}
 
-		private void LoadPlot()
+		public void LoadPlot()
 		{
 			DFTPlot.Width = Width * 0.7d;
 			DFTPlot.Height = Height * 0.6d;
+
+			Plot plot = new();
+
 			//DFTPlot.Plot.Add.Signal(fast, color:ScottPlot.Color.FromARGB(0xFF000000));
-			Heatmap hm = DFTPlot.Plot.Add.Heatmap(spectrogram);
-			hm.Colormap = new ScottPlot.Colormaps.Plasma();
+			Heatmap hm = plot.Add.Heatmap(spectrogram);
+			hm.Colormap = new InterpolatedColormap(Math.Cbrt, new ScottPlot.Colormaps.Plasma());
 			hm.FlipVertically = true;
 
 			hm.CellAlignment = Alignment.MiddleLeft;
 			//hm.Smooth = true;
-			DFTPlot.Plot.Add.ColorBar(hm);
+			plot.Add.ColorBar(hm);
 			//DFTPlot.Plot.SetAxisLimitsX(0, 136);
 			//DFTPlot.Plot.SetAxisLimitsY(0, 22050);
 			//DFTPlot.Plot.Margins(0, 0);
 			//SignalPlot sp = DFTPlot.Plot.AddSignal(fast, sampleRate:1/*inputCount/(double)44100*/, color:Color.IndianRed);
 			//DFTPlot.Plot.SaveFig(@"C:\Users\Us\source\repos\DFTvis\Plots\shortA4.png");
+
+			DFTPlot.Reset(plot);
 		}
 	}
 }
