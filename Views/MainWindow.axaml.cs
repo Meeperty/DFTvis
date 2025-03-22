@@ -20,7 +20,7 @@ namespace DFTvis.Views
 				DataContextCast.Height = Height;
 				DataContextCast.DFTPlot = this.Find<AvaPlot>("DFTPlot");
 			};
-			Closing += (object? o, CancelEventArgs e) =>
+			Closing += (object? o, WindowClosingEventArgs e) =>
 			{
 			};
 		}
