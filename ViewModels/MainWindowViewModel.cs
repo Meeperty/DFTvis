@@ -7,15 +7,15 @@ using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 namespace DFTvis.ViewModels
 {
 	public class MainWindowViewModel : /*ReactiveObject,*/ INotifyPropertyChanged
 	{
-		double[] fast;
 		double[,] spectrogram;
 		public event PropertyChangedEventHandler? PropertyChanged;
-		int inputCount = 16384 * 2;
 
 		private WavFile wvh = new(fileName);
 
@@ -60,30 +60,19 @@ namespace DFTvis.ViewModels
 		public double Width;
 		public double Height;
 
-		public MainWindowViewModel()
-		{
-			wvh = new(FileName);
-			Debug.WriteLine(wvh);
-
-			DateTime startSpectrogram = DateTime.Now;
-			GenerateSpectrogram();
-			DateTime endSpectrogram = DateTime.Now;
-			TimeSpan duration = endSpectrogram - startSpectrogram;
-			Text = $"processing time: {duration}\n{wvh.SampleCount} samples, {wvh.Duration} sec\napprox {new TimeSpan(wvh.SampleRate * duration.Ticks / wvh.SampleCount)} per sec";
-
-			Debug.WriteLine(duration);
-		}
-
-		public void GenerateAndPlot()
+		public async void GenerateAndPlot()
 		{
 			wvh = new(FileName);
 
+			Text = $"Generating...";
+			DFTPlot.Reset();
 			DateTime startSpectrogram = DateTime.Now;
-			GenerateSpectrogram();
+			Task spectroTask = Task.Run(GenerateSpectrogram);
+			await spectroTask;
 			DateTime endSpectrogram = DateTime.Now;
 			TimeSpan duration = endSpectrogram - startSpectrogram;
 			Text = $"processing time: {duration}\n{wvh.SampleCount} samples, {wvh.Duration} sec\napprox {new TimeSpan(wvh.SampleRate * duration.Ticks / wvh.SampleCount)} per sec";
-
+				
 			LoadPlot();
 		}
 
@@ -132,6 +121,7 @@ namespace DFTvis.ViewModels
 			//DFTPlot.Plot.SaveFig(@"C:\Users\Us\source\repos\DFTvis\Plots\shortA4.png");
 
 			DFTPlot.Reset(plot);
+			DFTPlot.UserInputProcessor.Enable();
 		}
 	}
 }
