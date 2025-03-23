@@ -184,17 +184,21 @@ namespace DFTvis
 
 		public static double[] FFT(double[] input)
 		{
-			return CFFT(input.Select(x => new Complex(x, 0)).AsArray()).Select(x => x.Magnitude).ToArray();
+			return CFFT(input.Select(x => new Complex(x, 0)).AsArray())
+				.Select(x => x.Magnitude)
+				.ToArray();
 		}
 
-		public static double[] FFT<T>(T[] rawInput)
+		public static double[] FFT<T>(IEnumerable<T> rawInput)
 		{
-			if (Convert.ChangeType(rawInput[0], typeof(double)) == null)
+			if (Convert.ChangeType(rawInput.ElementAt(0), typeof(double)) == null)
 			{
 				throw new InvalidCastException("FFT<T> was given a T which cannot be converted to double");
 			}
 			DateTime startInputProcessing = UtcNowPrecise;
-			Complex[] input = rawInput.Select(x => new Complex((double)Convert.ChangeType(x, typeof(double)),0)).ToArray();
+			Complex[] input = rawInput
+				.Select(x => new Complex((double)Convert.ChangeType(x, typeof(double)),0))
+				.ToArray();
 			DateTime endInputProcessing = UtcNowPrecise;
 			TimeSpan inputProcessing = endInputProcessing - startInputProcessing;
 
@@ -218,18 +222,18 @@ namespace DFTvis
 			return new Complex(Math.Cos(radians), Math.Sin(radians));
 		}
 
-		internal static List<double> ZeroPad(List<double> input, int totalLen)
+		internal static double[] ZeroPad(IEnumerable<double> input, int totalLen)
 		{
-			List<double> output = new();
+			double[] output = new double[totalLen];
 			for (int i = 0; i < totalLen; i++)
 			{
-				if (i < input.Count)
+				if (i < input.Count())
 				{
-					output.Add(input[i]);
+					output[i] = input.ElementAt(i);
 				}
 				else
 				{
-					output.Add(0);
+					output[i] = 0;
 				}
 			}
 			return output;

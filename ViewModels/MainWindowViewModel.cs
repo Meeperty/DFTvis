@@ -4,6 +4,7 @@ using ScottPlot.Avalonia;
 using ScottPlot.Panels;
 using ScottPlot.Plottables;
 using System;
+using System.Collections;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
@@ -78,19 +79,20 @@ namespace DFTvis.ViewModels
 
 		private void GenerateSpectrogram()
 		{
-			int timeSectionSampleLen = 44100 / 7;
-			//int timeSectionSampleLen = wvh.SampleCount;
+			int timeSectionSampleLen = wvh.SampleRate / 7;
 			int timeSections = (int)(wvh.SampleCount / (double)timeSectionSampleLen);
 			var input = wvh.GetData<double>()[0..(timeSections * timeSectionSampleLen)];
+
 			double avg = input.Average();
 			input = input.Select(x => x - avg).ToArray();
+
 			double[,] spectro = new double[44100 / 8, timeSections];
 			for (int i = 0; i < timeSections; i++)
 			{
 				double[] inputs = input[(i * timeSectionSampleLen)..((i + 1) * timeSectionSampleLen)];
-				inputs = Fourier.ZeroPad(inputs.ToList(), 44100 /*wvh.SampleCount*/).ToArray();
+				inputs = Fourier.ZeroPad(inputs, 44100);
+
 				double[] freqs = Fourier.FFT(inputs);
-				//fast = freqs;
 				for (int j = 0; j < 44100 / 8; j++)
 				{
 					spectro[j, i] = freqs[j];
