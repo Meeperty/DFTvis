@@ -4,50 +4,23 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace DFTvis
 {
-	internal static class Fourier
+	internal static partial class Fourier
 	{
 		const int frequencies = 44100;
 		const int samples = frequencies;
 		const double TAU = 2 * Math.PI;
 
-		public static double[] RealDFT(int[] input, int frequencies)
+		#region DFT
+		private static Complex[] CDFT(Complex[] input, int frequencies)
 		{
 			int size = input.Length;
-			double[] output = new double[frequencies];
+			Complex[] output = new Complex[frequencies];
 			double radiansStaticPart = TAU / size;
 			for (int i = 0; i < frequencies; i++)
-			{
-				Complex rawOutput = 0;
-				Complex matrixElement;
-				double radians;
-				for (int j = 0; j < size; j++)
-				{
-					radians = radiansStaticPart * i * j;
-					matrixElement = UnitCircleExp(radians);
-					rawOutput += input[j] * matrixElement;
-				}
-				output[i] = rawOutput.Magnitude;
-			}
-			return output;
-		}
-
-		public static double[] DFT(int[] input)
-		{
-			return RealDFT(input, frequencies);
-		}
-
-		public static Complex[] SquareDFT(Complex[] input)
-		{
-			int size = input.Length;
-			Complex[] output = new Complex[size];
-			double radiansStaticPart = -TAU / size;
-			for (int i = 0; i < size; i++)
 			{
 				Complex rawOutput = 0;
 				Complex matrixElement;
@@ -63,45 +36,59 @@ namespace DFTvis
 			return output;
 		}
 
-		public static Complex[] CFFTRadix2(Complex[] input)
+		private static Complex[] CDFT(IEnumerable<Complex> rawInput, int frequencies)
 		{
-			int size = input.Length;
-			int halfSize = size/2;
-			Complex[] output = new Complex[size];
-			if (size == 1)
-			{
-				output[0] = input[0];
-				goto ret;
-			}
-			//TODO: add more base cases
+			return CDFT(rawInput.ToArray(), frequencies);
+		}
 
-			Complex[] evenInputs = new Complex[halfSize];
-			for (int i = 0; i < halfSize; i++)
+		public static Complex[] CDFT<T>(IEnumerable<T> rawInput, int frequencies)
+		{
+			if (Convert.ChangeType(rawInput.ElementAt(0), typeof(double)) == null)
 			{
-				evenInputs[i] = input[2 * i];
-			}
-			Complex[] oddInputs = new Complex[halfSize];
-			for (int i = 0; i < halfSize; i++)
-			{
-				oddInputs[i] = input[2 * (i + 1) - 1];
-			}
-			Complex[] EvenFourier = CFFTRadix2(evenInputs);
-			Complex[] OddFourier = CFFTRadix2(oddInputs);
-			for (int k = 0; k < halfSize; k++)
-			{
-				Complex a = EvenFourier[k];
-				Complex b = OddFourier[k] * UnitCircleExp(-TAU * k / size);
-				output[k] = a + b;
-				output[k + halfSize] = a - b;
-				Debug.WriteLineIf(size == 4, $"a is {a}, b is {b}, a+b={a+b}, a-b={a-b}");
+				throw new InvalidCastException("RealDFT<T> was given a T which cannot be converted to double");
 			}
 
-			ret:
-			//Debug.Write($"{output.Length}#");
-			Debug.WriteLine($"For input {ComplexArrString(input)}, CFFTRadix2 returning {ComplexArrString(output)}");
+			Complex[] input = rawInput
+			.Select(x => new Complex((double)Convert.ChangeType(x, typeof(double)), 0))
+			.ToArray();
+
+			Complex[] output = CDFT(input, frequencies);
+
 			return output;
 		}
 
+		public static Complex[] SquareDFT<T>(IEnumerable<T> input)
+		{
+			return CDFT<T>(input, input.Count());
+		}
+
+		private static Complex[] SquareDFT(IEnumerable<Complex> input)
+		{
+			return CDFT(input, input.Count());
+		}
+
+		public static double[] RealDFT<T>(IEnumerable<T> rawInput, int frequencies)
+		{
+			if (Convert.ChangeType(rawInput.ElementAt(0), typeof(double)) == null)
+			{
+				throw new InvalidCastException("RealDFT<T> was given a T which cannot be converted to double");
+			}
+
+			Complex[] input = rawInput
+				.Select(x => new Complex((double)Convert.ChangeType(x, typeof(double)), 0))
+				.ToArray();
+
+			Complex[] output = CDFT(input, frequencies);
+
+			double[] processedOutput = output
+				.Select(x => x.Magnitude)
+				.ToArray();
+			return processedOutput;
+		}
+		#endregion
+
+
+		#region FFT
 		public static Complex[] CFFT(Complex[] input)
 		{
 			int size = input.Length;
@@ -144,12 +131,26 @@ namespace DFTvis
 			{
 				inputSections[i % radix][(int)Math.Floor(i / (decimal)radix)] = input[i];
 			}
+
+
 			//inputSections is Complex[radix][fractionSize]
 			Complex[][] outputSections = new Complex[radix][];
+			Task<Complex[]>[] cfftTasks = new Task<Complex[]>[radix];
 			for (int i = 0; i < radix; i++)
 			{
-				outputSections[i] = CFFT(inputSections[i]);
+				cfftTasks[i] = Task<Complex[]>.Factory.StartNew((object? input) =>
+				{
+					Complex[] cast = input as Complex[];
+					return CFFT(cast);
+				},
+				inputSections[i]);
 			}
+			Task.WaitAll(cfftTasks);
+			for (int i = 0; i < radix; i++)
+			{
+				outputSections[i] = cfftTasks[i].Result;
+			}
+
 
 			for (int k = 0; k < fractionSize; k++)
 			{
@@ -157,8 +158,9 @@ namespace DFTvis
 				Complex[] parts = new Complex[radix];
 				for (int i = 0; i < radix; i++)
 				{
+					double angle = -TAU * k * i / size;
 					//this UnitCircleExp is the twiddle factor
-					parts[i] = outputSections[i][k] * UnitCircleExp(-TAU * k * i / size);
+					parts[i] = outputSections[i][k] * UnitCircleExp(angle);
 				}
 
 				for (int i = 0; i < radix; i++)
@@ -166,7 +168,8 @@ namespace DFTvis
 					Complex outputItem = new Complex();
 					for (int j = 0; j < radix; j++)
 					{
-						outputItem += parts[j] * UnitCircleExp(-TAU * i * j / radix);
+						double angle = -TAU * i * j / radix;
+						outputItem += parts[j] * UnitCircleExp(angle);
 					}
 					output[k + i * (size / radix)] = outputItem;
 				}
@@ -177,113 +180,34 @@ namespace DFTvis
 			return output;
 		}
 
-		public static double[] FFTNormalized<T>(T[] input)
+		public static double[] FFTNormalized<T>(IEnumerable<T> input)
 		{
-			return FFT<T>(input).Select(x => x / input.Length).ToArray();
-		}
-
-		public static double[] FFT(double[] input)
-		{
-			return CFFT(input.Select(x => new Complex(x, 0)).AsArray())
-				.Select(x => x.Magnitude)
-				.ToArray();
+			int count = input.Count();
+			return FFT<T>(input).Select(x => x / count).ToArray();
 		}
 
 		public static double[] FFT<T>(IEnumerable<T> rawInput)
 		{
-			if (Convert.ChangeType(rawInput.ElementAt(0), typeof(double)) == null)
+			if (typeof(T) != typeof(Complex))
 			{
-				throw new InvalidCastException("FFT<T> was given a T which cannot be converted to double");
+				if (Convert.ChangeType(rawInput.ElementAt(0), typeof(double)) == null)
+				{
+					throw new InvalidCastException("FFT<T> was given a T which cannot be converted to double");
+				}
 			}
-			DateTime startInputProcessing = UtcNowPrecise;
+
 			Complex[] input = rawInput
 				.Select(x => new Complex((double)Convert.ChangeType(x, typeof(double)),0))
 				.ToArray();
-			DateTime endInputProcessing = UtcNowPrecise;
-			TimeSpan inputProcessing = endInputProcessing - startInputProcessing;
 
-			DateTime startCFFT = UtcNowPrecise;
 			Complex[] output = CFFT(input);
-			DateTime endCFFT = UtcNowPrecise;
-			TimeSpan cfft = endCFFT - startCFFT;
 
-			DateTime startOutputProcessing = UtcNowPrecise;
 			double[] processedOut = output
 					.Select(x => x.Magnitude)
 					.ToArray();
-			DateTime endOutputProcessing = UtcNowPrecise;
-			TimeSpan outputProcessing = endOutputProcessing - startOutputProcessing;
 
 			return processedOut;
 		}
-
-		private static Complex UnitCircleExp(double radians)
-		{
-			return new Complex(Math.Cos(radians), Math.Sin(radians));
-		}
-
-		internal static double[] ZeroPad(IEnumerable<double> input, int totalLen)
-		{
-			double[] output = new double[totalLen];
-			for (int i = 0; i < totalLen; i++)
-			{
-				if (i < input.Count())
-				{
-					output[i] = input.ElementAt(i);
-				}
-				else
-				{
-					output[i] = 0;
-				}
-			}
-			return output;
-		}
-
-		public static string ComplexArrString(Complex[] input)
-		{
-			StringBuilder sb = new();
-			sb.Append("[");
-			for (int i = 0; i < input.Length; i++)
-			{
-				if (i == input.Length - 1)
-					sb.Append(input[i].ToString("G4"));
-				else
-					sb.Append(input[i].ToString("G4") + ", ");
-			}
-			sb.Append("]");
-			return sb.ToString();
-        }
-
-		public static string ComplexMagnitudeArrString(Complex[] input)
-		{
-			StringBuilder sb = new();
-			sb.Append("[");
-			for (int i = 0; i < input.Length; i++)
-			{
-				if (i == input.Length - 1)
-					sb.Append(input[i].Magnitude.ToString("G4"));
-				else
-					sb.Append(input[i].Magnitude.ToString("G4") + ", ");
-			}
-			sb.Append("]");
-			return sb.ToString();
-		}
-
-		public static double BinFrequency(int binIndex, int sampleRate, int transformSize)
-		{
-			return binIndex * sampleRate / transformSize;
-		}
-
-		[DllImport("Kernel32.dll", CallingConvention = CallingConvention.Winapi)]
-		private static extern void GetSystemTimePreciseAsFileTime(out long filetime);
-		public static DateTime UtcNowPrecise
-		{
-			get
-			{
-				long filetime;
-				GetSystemTimePreciseAsFileTime(out filetime);
-				return DateTime.FromFileTimeUtc(filetime);
-			}
-		}
+		#endregion
 	}
 }

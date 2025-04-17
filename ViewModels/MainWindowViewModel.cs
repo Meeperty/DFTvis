@@ -72,7 +72,9 @@ namespace DFTvis.ViewModels
 			await spectroTask;
 			DateTime endSpectrogram = DateTime.Now;
 			TimeSpan duration = endSpectrogram - startSpectrogram;
-			Text = $"processing time: {duration}\n{wvh.SampleCount} samples, {wvh.Duration} sec\napprox {new TimeSpan(wvh.SampleRate * duration.Ticks / wvh.SampleCount)} per sec";
+			Text = $"processing time: {duration}" +
+				$"\n{wvh.SampleCount} samples, {wvh.Duration} sec" +
+				$"\napprox {new TimeSpan(wvh.SampleRate * duration.Ticks / wvh.SampleCount)} per sec";
 				
 			LoadPlot();
 		}
@@ -83,17 +85,20 @@ namespace DFTvis.ViewModels
 			int timeSections = (int)(wvh.SampleCount / (double)timeSectionSampleLen);
 			var input = wvh.GetData<double>()[0..(timeSections * timeSectionSampleLen)];
 
+			int freqResolution = 44100;
+
 			double avg = input.Average();
 			input = input.Select(x => x - avg).ToArray();
 
-			double[,] spectro = new double[44100 / 8, timeSections];
+			double[,] spectro = new double[freqResolution / 8, timeSections];
 			for (int i = 0; i < timeSections; i++)
 			{
 				double[] inputs = input[(i * timeSectionSampleLen)..((i + 1) * timeSectionSampleLen)];
-				inputs = Fourier.ZeroPad(inputs, 44100);
+				inputs = inputs.Select((x, n) => x * Fourier.HammingWindow(n, timeSectionSampleLen)).ToArray();
+				inputs = Fourier.ZeroPad(inputs, freqResolution);
 
 				double[] freqs = Fourier.FFT(inputs);
-				for (int j = 0; j < 44100 / 8; j++)
+				for (int j = 0; j < freqResolution / 8; j++)
 				{
 					spectro[j, i] = freqs[j];
 				}
