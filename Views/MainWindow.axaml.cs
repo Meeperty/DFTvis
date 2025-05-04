@@ -1,11 +1,7 @@
 using Avalonia.Controls;
 using DFTvis.ViewModels;
-using System;
-using System.Threading;
-using System.Media;
-using System.Runtime.InteropServices;
-using System.ComponentModel;
 using ScottPlot.Avalonia;
+using System;
 
 namespace DFTvis.Views
 {
@@ -14,7 +10,7 @@ namespace DFTvis.Views
 		public MainWindow()
 		{
 			InitializeComponent();
-			Opened += (object? o, EventArgs e) => 
+			Opened += (object? o, EventArgs e) =>
 			{
 				DataContextCast.Width = Width;
 				DataContextCast.Height = Height;

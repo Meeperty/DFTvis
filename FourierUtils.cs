@@ -1,8 +1,5 @@
-﻿using ScottPlot.Interactivity.UserActionResponses;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
@@ -19,7 +16,7 @@ namespace DFTvis
 
 		public static double HammingWindow(int index, int windowSize)
 		{
-			double a = 25d/46d;
+			double a = 25d / 46d;
 			return a - (1 - a) * Math.Cos(double.Tau * index / windowSize);
 		}
 

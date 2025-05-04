@@ -1,7 +1,5 @@
-﻿using DynamicData.Kernel;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
@@ -89,7 +87,7 @@ namespace DFTvis
 
 
 		#region FFT
-		public static Complex[] CFFT(Complex[] input)
+		public static Complex[] CFFT(Complex[] input, bool multithread = false)
 		{
 			int size = input.Length;
 			Complex[] output = new Complex[size];
@@ -136,19 +134,29 @@ namespace DFTvis
 			//inputSections is Complex[radix][fractionSize]
 			Complex[][] outputSections = new Complex[radix][];
 			Task<Complex[]>[] cfftTasks = new Task<Complex[]>[radix];
-			for (int i = 0; i < radix; i++)
+			if (multithread)
 			{
-				cfftTasks[i] = Task<Complex[]>.Factory.StartNew((object? input) =>
+				for (int i = 0; i < radix; i++)
 				{
-					Complex[] cast = input as Complex[];
-					return CFFT(cast);
-				},
-				inputSections[i]);
+					cfftTasks[i] = Task<Complex[]>.Factory.StartNew((object? input) =>
+					{
+						Complex[] cast = input as Complex[];
+						return CFFT(cast, true);
+					},
+					inputSections[i]);
+				}
+				Task.WaitAll(cfftTasks);
 			}
-			Task.WaitAll(cfftTasks);
 			for (int i = 0; i < radix; i++)
 			{
-				outputSections[i] = cfftTasks[i].Result;
+				if (multithread)
+				{
+					outputSections[i] = cfftTasks[i].Result;
+				}
+				else
+				{
+					outputSections[i] = CFFT(inputSections[i]);
+				}
 			}
 
 
@@ -175,18 +183,18 @@ namespace DFTvis
 				}
 			}
 
-			ret:
+		ret:
 			//Debug.WriteLine($"For input {ComplexArrString(input)}, CFFT {(radix == 0 ? "(CDFT)" : $"radix {radix}")} returning {ComplexArrString(output)}");
 			return output;
 		}
 
-		public static double[] FFTNormalized<T>(IEnumerable<T> input)
+		public static double[] FFTNormalized<T>(IEnumerable<T> input, bool multithread = false)
 		{
 			int count = input.Count();
-			return FFT<T>(input).Select(x => x / count).ToArray();
+			return FFT<T>(input, multithread).Select(x => x / count).ToArray();
 		}
 
-		public static double[] FFT<T>(IEnumerable<T> rawInput)
+		public static double[] FFT<T>(IEnumerable<T> rawInput, bool multithread = false)
 		{
 			if (typeof(T) != typeof(Complex))
 			{
@@ -197,10 +205,10 @@ namespace DFTvis
 			}
 
 			Complex[] input = rawInput
-				.Select(x => new Complex((double)Convert.ChangeType(x, typeof(double)),0))
+				.Select(x => new Complex((double)Convert.ChangeType(x, typeof(double)), 0))
 				.ToArray();
 
-			Complex[] output = CFFT(input);
+			Complex[] output = CFFT(input, multithread);
 
 			double[] processedOut = output
 					.Select(x => x.Magnitude)

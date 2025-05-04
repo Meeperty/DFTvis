@@ -1,14 +1,12 @@
 using DFTvis.WindowsSound;
 using ScottPlot;
 using ScottPlot.Avalonia;
-using ScottPlot.Panels;
 using ScottPlot.Plottables;
 using System;
-using System.Collections;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DFTvis.ViewModels
@@ -46,6 +44,28 @@ namespace DFTvis.ViewModels
 			}
 		}
 
+		private bool multithreadFFT = false;
+		public bool MultithreadFFT
+		{
+			get => multithreadFFT;
+			set
+			{
+				multithreadFFT = value;
+				PropertyChanged?.Invoke(this, new(nameof(MultithreadFFT)));
+			}
+		}
+
+		private bool multithreadSpectrogram = true;
+		public bool MultithreadSpectrogram
+		{
+			get => multithreadSpectrogram;
+			set
+			{
+				multithreadSpectrogram = value;
+				PropertyChanged?.Invoke(this, new(nameof(MultithreadSpectrogram)));
+			}
+		}
+
 		private AvaPlot dftPlot;
 		public AvaPlot DFTPlot
 		{
@@ -61,6 +81,10 @@ namespace DFTvis.ViewModels
 		public double Width;
 		public double Height;
 
+		public int sectionsPerSecond = 32;
+		public int frequencyResolution = 44100;
+		public int visibleFrequencyFraction = 8;
+
 		public async void GenerateAndPlot()
 		{
 			wvh = new(FileName);
@@ -68,41 +92,94 @@ namespace DFTvis.ViewModels
 			Text = $"Generating...";
 			DFTPlot.Reset();
 			DateTime startSpectrogram = DateTime.Now;
-			Task spectroTask = Task.Run(GenerateSpectrogram);
+			Task spectroTask;
+			if (multithreadSpectrogram)
+				spectroTask = Task.Run(GenerateSpectrogramMultithread);
+			else
+				spectroTask = Task.Run(GenerateSpectrogram);
 			await spectroTask;
 			DateTime endSpectrogram = DateTime.Now;
 			TimeSpan duration = endSpectrogram - startSpectrogram;
+
+			ThreadPool.GetMaxThreads(out int workerThreads, out int ioThreads);
+
 			Text = $"processing time: {duration}" +
 				$"\n{wvh.SampleCount} samples, {wvh.Duration} sec" +
-				$"\napprox {new TimeSpan(wvh.SampleRate * duration.Ticks / wvh.SampleCount)} per sec";
-				
+				$"\napprox {new TimeSpan(wvh.SampleRate * duration.Ticks / wvh.SampleCount)} per sec"
+				+ $"\nthread pool has {workerThreads} workers, {ioThreads} ports";
+
 			LoadPlot();
 		}
 
 		private void GenerateSpectrogram()
 		{
-			int timeSectionSampleLen = wvh.SampleRate / 7;
+			int timeSectionSampleLen = wvh.SampleRate / sectionsPerSecond;
 			int timeSections = (int)(wvh.SampleCount / (double)timeSectionSampleLen);
 			var input = wvh.GetData<double>()[0..(timeSections * timeSectionSampleLen)];
-
-			int freqResolution = 44100;
 
 			double avg = input.Average();
 			input = input.Select(x => x - avg).ToArray();
 
-			double[,] spectro = new double[freqResolution / 8, timeSections];
+			double[,] spectro = new double[frequencyResolution / visibleFrequencyFraction, timeSections];
 			for (int i = 0; i < timeSections; i++)
 			{
 				double[] inputs = input[(i * timeSectionSampleLen)..((i + 1) * timeSectionSampleLen)];
 				inputs = inputs.Select((x, n) => x * Fourier.HammingWindow(n, timeSectionSampleLen)).ToArray();
-				inputs = Fourier.ZeroPad(inputs, freqResolution);
+				inputs = Fourier.ZeroPad(inputs, frequencyResolution);
 
-				double[] freqs = Fourier.FFT(inputs);
-				for (int j = 0; j < freqResolution / 8; j++)
+				double[] freqs = Fourier.FFT(inputs, MultithreadFFT);
+				for (int j = 0; j < frequencyResolution / visibleFrequencyFraction; j++)
 				{
 					spectro[j, i] = freqs[j];
 				}
 			}
+			spectrogram = spectro;
+		}
+
+		private void GenerateSpectrogramMultithread()
+		{
+			int timeSectionSampleLen = wvh.SampleRate / sectionsPerSecond;
+			int timeSections = (int)(wvh.SampleCount / (double)timeSectionSampleLen);
+			var input = wvh.GetData<double>()[0..(timeSections * timeSectionSampleLen)];
+
+			double avg = input.Average();
+			input = input.Select(x => x - avg).ToArray();
+
+			double[,] spectro = new double[frequencyResolution / visibleFrequencyFraction, timeSections];
+			Task<double[]>[] timeSectionTasks = new Task<double[]>[timeSections];
+			Task[] spectrogramCreationTasks = new Task[timeSections];
+			for (int i = 0; i < timeSections; i++)
+			{
+				double[] inputs = input[(i * timeSectionSampleLen)..((i + 1) * timeSectionSampleLen)];
+
+				timeSectionTasks[i] = Task.Factory.StartNew((object? inputObj) =>
+				{
+					if ((double[]?)inputObj is null)
+						throw new UnreachableException("Oh dear");
+
+					double[] inputs = (double[])inputObj;
+					inputs = inputs.Select((x, n) => x * Fourier.HammingWindow(n, timeSectionSampleLen)).ToArray();
+					inputs = Fourier.ZeroPad(inputs, frequencyResolution);
+
+					double[] freqs = Fourier.FFT(inputs)[0..(frequencyResolution / visibleFrequencyFraction)];
+					return freqs;
+				}, inputs);
+
+				spectrogramCreationTasks[i] = timeSectionTasks[i].ContinueWith((Task<double[]> sectionTask, object? index) =>
+				{
+					if ((int?)index is null)
+						throw new UnreachableException("oh dear");
+
+					double[] result = sectionTask.Result;
+
+					for (int j = 0; j < frequencyResolution / 8; j++)
+					{
+						spectro[j, (int)index] = result[j];
+					}
+				}, i);
+			}
+
+			Task.WaitAll(spectrogramCreationTasks);
 			spectrogram = spectro;
 		}
 

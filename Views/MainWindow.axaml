@@ -28,6 +28,37 @@
 			Command="{Binding GenerateAndPlot}">
 			Generate Plot
 		</Button>
+
+		<StackPanel Orientation="Horizontal"
+			DockPanel.Dock="Top" 
+			HorizontalAlignment="Center">
+			<StackPanel 
+				Orientation="Vertical">
+				<RadioButton
+					IsChecked="{Binding MultithreadFFT}"
+					GroupName="MultithreadFFT"
+					Content="Multithreaded FFT"
+					Padding="10,0,10,0"/>
+				<RadioButton
+					GroupName="MultithreadFFT"
+					Content="Single-threaded FFT"
+					Padding="10,0,10,0"/>
+			</StackPanel>
+			<StackPanel Orientation="Vertical">
+				<RadioButton
+					IsChecked="{Binding MultithreadSpectrogram}"
+					GroupName="MultithreadSpectro"
+					Content="Multithreaded Spectrogram"
+					Padding="10,0,10,0"/>
+				<RadioButton
+					GroupName="MultithreadSpectro"
+					Content="Single-threaded Spectrogram"
+					Padding="10,0,10,0"/>
+			</StackPanel>
+		</StackPanel>
+		
+		
+		
 		<TextBlock
 			DockPanel.Dock="Top"
 		Text="{Binding Text}"
