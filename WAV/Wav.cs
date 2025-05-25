@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 
 namespace DFTvis.WindowsSound
 {
@@ -15,7 +13,7 @@ namespace DFTvis.WindowsSound
 		}
 
 		UInt16 audioFormat;
-		UInt16 numChannels; 
+		UInt16 numChannels;
 		UInt32 sampleRate; //samples per second
 		UInt32 byteRate; //for buffer estimation
 		UInt16 blockAlign; //block alignment of waveform data, in bytes
@@ -47,7 +45,7 @@ namespace DFTvis.WindowsSound
 					case BitsPerSample.EightBits:
 						return (int)datachunkSize / numChannels;
 					default:
-						return (int)datachunkSize /(sizeof(Int16) * numChannels);
+						return (int)datachunkSize / (sizeof(Int16) * numChannels);
 				}
 			}
 		}
@@ -70,9 +68,9 @@ namespace DFTvis.WindowsSound
 					T[] data = new T[byteData.Length / numChannels];
 					for (int i = 0; i < byteData.Length; i++)
 					{
-						if (i % numChannels == 0) 
-						{ 
-							data[i / numChannels] = (T)Convert.ChangeType(byteData[i], typeof(T)); 
+						if (i % numChannels == 0)
+						{
+							data[i / numChannels] = (T)Convert.ChangeType(byteData[i], typeof(T));
 						}
 					}
 					return data;
@@ -80,9 +78,9 @@ namespace DFTvis.WindowsSound
 					T[] data2 = new T[int16Data.Length / numChannels];
 					for (int i = 0; i < int16Data.Length; i++)
 					{
-						if (i % numChannels == 0) 
-						{ 
-							data2[i / numChannels] = (T)Convert.ChangeType(int16Data[i], typeof(T)); 
+						if (i % numChannels == 0)
+						{
+							data2[i / numChannels] = (T)Convert.ChangeType(int16Data[i], typeof(T));
 						}
 					}
 					return data2;
@@ -94,7 +92,7 @@ namespace DFTvis.WindowsSound
 			using (BinaryReader br = new(File.Open(filePath, FileMode.Open)))
 			{
 				byte[] riffHeader = br.ReadBytes(4);
-				if (!riffHeader.SequenceEqual(new byte[] {(byte)'R', (byte)'I', (byte)'F', (byte)'F' })) throw new ArgumentException("Attempted to parse a non-RIFF file as WAV");
+				if (!riffHeader.SequenceEqual(new byte[] { (byte)'R', (byte)'I', (byte)'F', (byte)'F' })) throw new ArgumentException("Attempted to parse a non-RIFF file as WAV");
 
 				br.ReadUInt32(); //ignoring: File size remaining, minus 8 bytes
 
@@ -108,7 +106,7 @@ namespace DFTvis.WindowsSound
 				if (fmtChunkSize != 0x10) throw new ArgumentException("WAV file fmt chunk is an unexpected length");
 
 				audioFormat = br.ReadUInt16();
-				if(audioFormat != 1) throw new NotImplementedException("Parsing WAV formats other than integer PCM is not implemented");
+				if (audioFormat != 1) throw new NotImplementedException("Parsing WAV formats other than integer PCM is not implemented");
 
 				numChannels = br.ReadUInt16();
 				sampleRate = br.ReadUInt32();

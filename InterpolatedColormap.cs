@@ -1,5 +1,4 @@
 ﻿using ScottPlot;
-using ScottPlot.Colormaps;
 using System;
 
 namespace DFTvis

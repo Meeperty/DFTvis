@@ -48,15 +48,15 @@
 //		{
 //			audioStream = audStream;
 //			REFERENCE_TIME requestedDuration = REFTIMES_PER_SEC;
-			
+
 //			AudioRenderClient audioRenderClient;
 //			byte* buffer;
 //			ulong flags = 0;
-			
+
 //			audioClient.Initialize(AudioClientShareMode.Shared, AudioClientStreamFlags.EventCallback, requestedDuration, 0, wvfmt, Guid.Empty);
 //			IntPtr loopFnPtr = Marshal.GetFunctionPointerForDelegate(Loop);
 //			audioClient.SetEventHandle(loopFnPtr);
-			
+
 //			audStream.SetFormat(wvfmt);
 
 //			audioRenderClient = audioClient.AudioRenderClient;
@@ -65,7 +65,7 @@
 //			buffer = (byte*)audioRenderClient.GetBuffer((int)bufferFrameCount);
 //			audStream.LoadData((int)bufferFrameCount, buffer, &flags);
 //			audioRenderClient.ReleaseBuffer((int)bufferFrameCount, (AudioClientBufferFlags)flags);
-			
+
 //			audioClient.Start();
 //		}
 
@@ -128,7 +128,7 @@
 //				buffer[i] = data[progress++];
 //				if (progress !< data.Length)
 //				{
-					
+
 //				}
 //			}
 //		}

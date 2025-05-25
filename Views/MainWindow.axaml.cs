@@ -1,7 +1,5 @@
 using Avalonia.Controls;
 using DFTvis.ViewModels;
-using ScottPlot.Avalonia;
-using System;
 
 namespace DFTvis.Views
 {
