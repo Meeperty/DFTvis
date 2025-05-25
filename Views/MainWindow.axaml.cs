@@ -10,16 +10,8 @@ namespace DFTvis.Views
 		public MainWindow()
 		{
 			InitializeComponent();
-			Opened += (object? o, EventArgs e) =>
-			{
-				DataContextCast.Width = Width;
-				DataContextCast.Height = Height;
-				DataContextCast.DFTPlot = this.Find<AvaPlot>("DFTPlot");
-				DataContextCast.GenerateAndPlot();
-			};
-			Closing += (object? o, WindowClosingEventArgs e) =>
-			{
-			};
+			Width = 900;
+			Height = 600;
 		}
 
 		MainWindowViewModel DataContextCast

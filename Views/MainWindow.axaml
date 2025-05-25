@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:DFTvis.ViewModels"
+		xmlns:dftvis="using:DFTvis"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
@@ -13,62 +14,14 @@
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
-	<DockPanel
-		DockPanel.Dock="Top"
-		VerticalAlignment="Center">
-		<TextBox 
-			DockPanel.Dock="Top"
-			Text="{Binding FileName}" 
-			MaxHeight="10"
-			Margin="10"/>
-		<Button
-			DockPanel.Dock="Top"
-			HorizontalAlignment="Center"
-			Margin="10"
-			Command="{Binding GenerateAndPlot}">
-			Generate Plot
-		</Button>
-
-		<StackPanel Orientation="Horizontal"
-			DockPanel.Dock="Top" 
-			HorizontalAlignment="Center">
-			<StackPanel 
-				Orientation="Vertical">
-				<RadioButton
-					IsChecked="{Binding MultithreadFFT}"
-					GroupName="MultithreadFFT"
-					Content="Multithreaded FFT"
-					Padding="10,0,10,0"/>
-				<RadioButton
-					GroupName="MultithreadFFT"
-					Content="Single-threaded FFT"
-					Padding="10,0,10,0"/>
-			</StackPanel>
-			<StackPanel Orientation="Vertical">
-				<RadioButton
-					IsChecked="{Binding MultithreadSpectrogram}"
-					GroupName="MultithreadSpectro"
-					Content="Multithreaded Spectrogram"
-					Padding="10,0,10,0"/>
-				<RadioButton
-					GroupName="MultithreadSpectro"
-					Content="Single-threaded Spectrogram"
-					Padding="10,0,10,0"/>
-			</StackPanel>
-		</StackPanel>
-		
-		
-		
-		<TextBlock
-			DockPanel.Dock="Top"
-		Text="{Binding Text}"
-		FontSize="10"
-		HorizontalAlignment="Center"
-		Margin="5"/>
-		<ScottPlot:AvaPlot 
-			DockPanel.Dock="Top"
-			Name="DFTPlot"/>
-	</DockPanel>
+	<TabControl>
+		<TabItem Header="A">
+			<dftvis:SpectrogramTabView DataContext="{Binding SpectrogramTabViewModel}"/>
+		</TabItem>
+		<TabItem Header="B">
+			
+		</TabItem>
+	</TabControl>
 	
 
 </Window>
